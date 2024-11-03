@@ -55,6 +55,9 @@ public class MainActivity extends AppCompatActivity implements
     private float[] lastKnownSpeeds = new float[5]; // Rolling average of last 5 speed readings
     private int speedIndex = 0;
     private float currentSpeed = 0;
+    private float totalElevationGain = 0;
+    private float currentElevation = 0;
+    private float lastElevation = 0;
     private MaterialCardView statsCard;
     private FloatingActionButton resetFab;
     private Button shareButton, startTrackingButton;
@@ -242,6 +245,20 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
         currentSpeed = count > 0 ? sum / count : 0;
+    }
+
+    private void updateElevationData(double newElevation) {
+        if (lastElevation != 0) {
+            float elevationDiff = (float) newElevation - lastElevation;
+            // Filter out small elevation changes (noise)
+            if (Math.abs(elevationDiff) > 0.5) {
+                if (elevationDiff > 0) {
+                    totalElevationGain += elevationDiff;
+                }
+                currentElevation = (float) newElevation;
+            }
+        }
+        lastElevation = (float) newElevation;
     }
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
