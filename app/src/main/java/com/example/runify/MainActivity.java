@@ -390,4 +390,16 @@ public class MainActivity extends AppCompatActivity implements
         sensorManager.unregisterListener(this);
         stopLocationUpdates();
     }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mapView.onDestroy();
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mapView.onLowMemory();
+    }
+
 }
