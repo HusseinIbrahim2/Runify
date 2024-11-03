@@ -7,6 +7,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorManager;
 import android.hardware.SensorEventListener;
 import android.os.Bundle;
+import android.telephony.SmsManager;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,6 +25,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Sensor stepSensor;
     private static final int PERMISSION_REQUEST_CODE = 100;
     private boolean isPermissionGranted = false;
+    private static final String EMERGENCY_PHONE_NUMBER = "your phone number here";
 
     private TextView stepCountText, distanceText,
             caloriesText, speedText, elevationText;
@@ -105,6 +107,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
             int currentSteps = (int) event.values[0] - stepCount;
             stepCountText.setText(String.valueOf(currentSteps));
+        }
+    }
+    private void sendEmergencySMS() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
+            SmsManager smsManager = SmsManager.getDefault();
+            String message = "Emergency! Possible fall detected. Please check on the user.";
+            smsManager.sendTextMessage(EMERGENCY_PHONE_NUMBER, null, message, null, null);
+            Toast.makeText(this, "Emergency SMS sent", Toast.LENGTH_SHORT).show();
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, PERMISSION_REQUEST_CODE);
         }
     }
     @Override
