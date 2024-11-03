@@ -6,7 +6,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorManager;
 import android.hardware.SensorEventListener;
+import android.location.Location;
 import android.os.Bundle;
+import android.os.Looper;
 import android.telephony.SmsManager;
 import android.widget.Button;
 import android.widget.TextView;
@@ -17,9 +19,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -33,14 +41,17 @@ public class MainActivity extends AppCompatActivity implements
     private Sensor stepSensor;
     private GoogleMap googleMap;
     private MapView mapView;
+    private FusedLocationProviderClient fusedLocationClient;
+    private LocationCallback locationCallback;
 
     private TextView stepCountText, distanceText,
             caloriesText, speedText, elevationText;
     private int stepCount = 0;
     private boolean isProximityClose = false;
     private long lastSmsSentTime = 0;
+    private boolean isTracking = false;
     private static final long SMS_COOLDOWN_PERIOD = 300000; // 5 minutes in milliseconds
-
+    private static final long LOCATION_UPDATE_INTERVAL = 5000;
     private MaterialCardView statsCard;
     private FloatingActionButton resetFab;
     private Button shareButton, startTrackingButton;
@@ -108,6 +119,41 @@ public class MainActivity extends AppCompatActivity implements
                 Toast.makeText(this, "Permissions denied. Step counting or SMS won't work.", Toast.LENGTH_SHORT).show();
             }
         }
+    }
+    private void setupLocationServices() {
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult == null || !isTracking) return;
+
+                Location location = locationResult.getLastLocation();
+                updateLocationData(location);
+            }
+        };
+    }
+    private void updateLocationData(Location location) {
+
+    }
+
+    private void startLocationUpdates() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
+        LocationRequest locationRequest = LocationRequest.create()
+                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                .setInterval(LOCATION_UPDATE_INTERVAL);
+
+        fusedLocationClient.requestLocationUpdates(locationRequest,
+                locationCallback,
+                Looper.getMainLooper());
+    }
+
+    private void stopLocationUpdates() {
+        fusedLocationClient.removeLocationUpdates(locationCallback);
     }
 
     private void initializeViews() {
