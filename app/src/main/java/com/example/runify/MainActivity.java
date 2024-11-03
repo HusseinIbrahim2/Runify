@@ -21,15 +21,18 @@ import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
-    private SensorManager sensorManager;
-    private Sensor stepSensor;
     private static final int PERMISSION_REQUEST_CODE = 100;
     private boolean isPermissionGranted = false;
     private static final String EMERGENCY_PHONE_NUMBER = "your phone number here";
+    private SensorManager sensorManager;
+    private Sensor stepSensor;
 
     private TextView stepCountText, distanceText,
             caloriesText, speedText, elevationText;
     private int stepCount = 0;
+    private boolean isProximityClose = false;
+    private long lastSmsSentTime = 0;
+    private static final long SMS_COOLDOWN_PERIOD = 300000; // 5 minutes in milliseconds
 
     private MaterialCardView statsCard;
     private FloatingActionButton resetFab;
@@ -44,23 +47,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         checkPermissionAndSetupSensors();
     }
 
-    private void initializeViews() {
-        stepCountText = findViewById(R.id.stepCountText);
-        distanceText = findViewById(R.id.distanceText);
-        caloriesText = findViewById(R.id.caloriesText);
-        speedText = findViewById(R.id.speedText);
-        elevationText = findViewById(R.id.elevationText);
-        statsCard = findViewById(R.id.statsCard);
-        resetFab = findViewById(R.id.resetFab);
-        shareButton = findViewById(R.id.shareButton);
-        startTrackingButton = findViewById(R.id.startTrackingButton);
-    }
-
     private void checkPermissionAndSetupSensors() {
         if ((ContextCompat.checkSelfPermission(
                 this,
-                android.Manifest.permission.ACTIVITY_RECOGNITION
-        ) == PackageManager.PERMISSION_GRANTED)) {
+                Manifest.permission.ACTIVITY_RECOGNITION
+        ) == PackageManager.PERMISSION_GRANTED) && (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED)) {
             isPermissionGranted = true;
             setupSensors();
         } else {
@@ -71,8 +64,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private void requestPermission() {
         ActivityCompat.requestPermissions(
                 this,
-                new String[]{android.Manifest.permission.ACTIVITY_RECOGNITION},
+                new String[]{
+                        Manifest.permission.ACTIVITY_RECOGNITION,
+                        Manifest.permission.SEND_SMS},
                 PERMISSION_REQUEST_CODE
+
         );
     }
 
@@ -96,17 +92,49 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
+    private void initializeViews() {
+        stepCountText = findViewById(R.id.stepCountText);
+        distanceText = findViewById(R.id.distanceText);
+        caloriesText = findViewById(R.id.caloriesText);
+        speedText = findViewById(R.id.speedText);
+        elevationText = findViewById(R.id.elevationText);
+        statsCard = findViewById(R.id.statsCard);
+        resetFab = findViewById(R.id.resetFab);
+        shareButton = findViewById(R.id.shareButton);
+        startTrackingButton = findViewById(R.id.startTrackingButton);
+    }
+
     private void setupSensors() {
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         stepSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
     }
     public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
-            if (stepCount == 0) {
-                stepCount = (int) event.values[0];
-            }
-            int currentSteps = (int) event.values[0] - stepCount;
-            stepCountText.setText(String.valueOf(currentSteps));
+        switch (event.sensor.getType()) {
+            case Sensor.TYPE_STEP_COUNTER:
+                if (stepCount == 0) {
+                    stepCount = (int) event.values[0];
+                }
+                int currentSteps = (int) event.values[0] - stepCount;
+                stepCountText.setText(String.valueOf(currentSteps));
+                break;
+            case Sensor.TYPE_PROXIMITY:
+                float proximity = event.values[0];
+
+                if (proximity == 0) {
+                    if (!isProximityClose) {
+                        isProximityClose = true;
+
+                        long currentTimes = System.currentTimeMillis();
+                        if (currentTimes - lastSmsSentTime >= SMS_COOLDOWN_PERIOD) {
+                            sendEmergencySMS();
+                            lastSmsSentTime = currentTimes;
+                        }
+                    }
+                } else {
+                    isProximityClose = false;
+                    lastSmsSentTime=0;
+                }
+                break;
         }
     }
     private void sendEmergencySMS() {
@@ -129,6 +157,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (stepSensor != null) {
             sensorManager.registerListener(this, stepSensor, SensorManager.SENSOR_DELAY_NORMAL);
         }
+        Sensor proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+        if (proximitySensor != null) {
+            sensorManager.registerListener(this, proximitySensor, SensorManager.SENSOR_DELAY_NORMAL);
+        }
     }
 
     @Override
@@ -137,4 +169,3 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensorManager.unregisterListener(this);
     }
 }
-
