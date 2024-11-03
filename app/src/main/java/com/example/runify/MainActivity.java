@@ -50,10 +50,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private void checkPermissionAndSetupSensors() {
         if ((ContextCompat.checkSelfPermission(
                 this,
-                Manifest.permission.ACTIVITY_RECOGNITION
-        ) == PackageManager.PERMISSION_GRANTED) && (ContextCompat.checkSelfPermission(
+                Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED)
+                && (ContextCompat.checkSelfPermission(
                 this,
-                Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED)) {
+                Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED)
+                && (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+                && (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
             isPermissionGranted = true;
             setupSensors();
         } else {
@@ -66,7 +72,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 this,
                 new String[]{
                         Manifest.permission.ACTIVITY_RECOGNITION,
-                        Manifest.permission.SEND_SMS},
+                        Manifest.permission.SEND_SMS,
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                },
                 PERMISSION_REQUEST_CODE
 
         );
