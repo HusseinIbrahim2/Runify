@@ -21,12 +21,13 @@
             android:text="Runify"
             android:textSize="24sp"
             android:textStyle="bold"
+            android:textColor="@color/black"
             android:layout_marginBottom="16dp"/>
 
         <com.google.android.gms.maps.MapView
             android:id="@+id/mapView"
             android:layout_width="match_parent"
-            android:layout_height="300dp"
+            android:layout_height="290dp"
             android:layout_marginBottom="16dp"/>
 
         <com.google.android.material.card.MaterialCardView
@@ -175,7 +176,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Share Progress"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+            style="@style/Widget.MaterialComponents.Button"/>
     </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton

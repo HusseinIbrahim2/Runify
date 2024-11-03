@@ -318,10 +318,15 @@ public class MainActivity extends AppCompatActivity implements
 
         if (isTracking) {
             startLocationUpdates();
+            if (stepSensor != null) {
+                sensorManager.registerListener(this, stepSensor, SensorManager.SENSOR_DELAY_NORMAL);
+            }
         } else {
             stopLocationUpdates();
+            sensorManager.unregisterListener(this, stepSensor);
         }
     }
+
 
     private void startLocationUpdates() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -446,7 +451,7 @@ public class MainActivity extends AppCompatActivity implements
 
         googleMap.getUiSettings().setZoomControlsEnabled(true);
         googleMap.getUiSettings().setCompassEnabled(true);
-        googleMap.setMinZoomPreference(15);
+        googleMap.setMinZoomPreference(10);
 
     }
 
@@ -460,21 +465,18 @@ public class MainActivity extends AppCompatActivity implements
         super.onResume();
         mapView.onResume();
 
-        if (stepSensor != null) {
-            sensorManager.registerListener(this, stepSensor,
-                    SensorManager.SENSOR_DELAY_NORMAL);
-        }
-
-        Sensor proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
-        if (proximitySensor != null) {
-            sensorManager.registerListener(this, proximitySensor,
-                    SensorManager.SENSOR_DELAY_NORMAL);
-        }
-
         if (isTracking) {
             startLocationUpdates();
+            if (stepSensor != null) {
+                sensorManager.registerListener(this, stepSensor, SensorManager.SENSOR_DELAY_NORMAL);
+            }
+        }
+        Sensor proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+        if (proximitySensor != null) {
+            sensorManager.registerListener(this, proximitySensor, SensorManager.SENSOR_DELAY_NORMAL);
         }
     }
+
 
     @Override
     protected void onPause() {
