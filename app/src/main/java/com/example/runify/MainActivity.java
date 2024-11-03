@@ -172,6 +172,7 @@ public class MainActivity extends AppCompatActivity implements
         }
         lastLocation = location;
         lastLocationTimestamp = currentTime;
+        updateStats();
     }
 
     private void startLocationUpdates() {
@@ -311,6 +312,14 @@ public class MainActivity extends AppCompatActivity implements
         googleMap.addPolyline(polylineOptions);
         googleMap.animateCamera(CameraUpdateFactory.newLatLng(
                 routePoints.get(routePoints.size() - 1)));
+    }
+    private void updateStats() {
+        String speedDisplay = currentSpeed < 0.5 ? "0.0" : String.format("%.1f", currentSpeed);
+        stepCountText.setText(String.format("%,d", stepCount));
+        distanceText.setText(String.format("%.2f km", totalDistance));
+        caloriesText.setText(String.format("%.0f cal", calculateCalories()));
+        speedText.setText(String.format("%s km/h", speedDisplay));
+        elevationText.setText(String.format("%.1f m", currentElevation));
     }
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
