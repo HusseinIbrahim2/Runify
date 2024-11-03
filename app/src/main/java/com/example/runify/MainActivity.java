@@ -222,6 +222,10 @@ public class MainActivity extends AppCompatActivity implements
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, PERMISSION_REQUEST_CODE);
         }
     }
+    private boolean isRealisticMovement(float distance, float timeDiff) {
+        float speed = (distance / timeDiff) * 3.6f;
+        return speed <= 25.0f;
+    }
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
