@@ -24,12 +24,17 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements
         SensorEventListener,
@@ -58,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements
     private float totalElevationGain = 0;
     private float currentElevation = 0;
     private float lastElevation = 0;
+    private List<LatLng> routePoints = new ArrayList<>();
     private MaterialCardView statsCard;
     private FloatingActionButton resetFab;
     private Button shareButton, startTrackingButton;
@@ -250,7 +256,6 @@ public class MainActivity extends AppCompatActivity implements
     private void updateElevationData(double newElevation) {
         if (lastElevation != 0) {
             float elevationDiff = (float) newElevation - lastElevation;
-            // Filter out small elevation changes (noise)
             if (Math.abs(elevationDiff) > 0.5) {
                 if (elevationDiff > 0) {
                     totalElevationGain += elevationDiff;
@@ -259,6 +264,19 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
         lastElevation = (float) newElevation;
+    }
+    private void updateMap() {
+        if (googleMap == null || routePoints.size() < 2) return;
+
+        PolylineOptions polylineOptions = new PolylineOptions()
+                .addAll(routePoints)
+                .color(ContextCompat.getColor(this, R.color.black))
+                .width(12);
+
+        googleMap.clear();
+        googleMap.addPolyline(polylineOptions);
+        googleMap.animateCamera(CameraUpdateFactory.newLatLng(
+                routePoints.get(routePoints.size() - 1)));
     }
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
