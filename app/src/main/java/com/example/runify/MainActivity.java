@@ -1,6 +1,7 @@
 package com.example.runify;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -210,6 +211,7 @@ public class MainActivity extends AppCompatActivity implements
 
         startTrackingButton.setOnClickListener(v -> toggleTracking());
         resetFab.setOnClickListener(v -> resetTracker());
+        shareButton.setOnClickListener(v -> shareProgress());
     }
 
     private void setupSensors() {
@@ -346,6 +348,23 @@ public class MainActivity extends AppCompatActivity implements
             googleMap.clear();
         }
         updateStats();
+    }
+    private void shareProgress() {
+        String shareText = String.format(
+                "Today's Workout Summary:\n" +
+                        "🚶 Steps: %d\n" +
+                        "📏 Distance: %.2f km\n" +
+                        "🔥 Calories: %.0f\n" +
+                        "⚡ Speed: %.1f km/h\n" +
+                        "📈 Elevation: %.1f m",
+                stepCount, totalDistance, calculateCalories(),
+                currentSpeed, currentElevation
+        );
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
+        startActivity(Intent.createChooser(shareIntent, "Share your workout"));
     }
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
