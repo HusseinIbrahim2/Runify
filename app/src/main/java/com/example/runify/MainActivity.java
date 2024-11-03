@@ -209,6 +209,7 @@ public class MainActivity extends AppCompatActivity implements
         mapView = findViewById(R.id.mapView);
 
         startTrackingButton.setOnClickListener(v -> toggleTracking());
+        resetFab.setOnClickListener(v -> resetTracker());
     }
 
     private void setupSensors() {
@@ -334,6 +335,17 @@ public class MainActivity extends AppCompatActivity implements
         caloriesText.setText(String.format("%.0f cal", calculateCalories()));
         speedText.setText(String.format("%s km/h", speedDisplay));
         elevationText.setText(String.format("%.1f m", currentElevation));
+    }
+    private void resetTracker() {
+        stepCount = 0;
+        totalDistance = 0;
+        currentSpeed = 0;
+        currentElevation = 0;
+        routePoints.clear();
+        if (googleMap != null) {
+            googleMap.clear();
+        }
+        updateStats();
     }
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
