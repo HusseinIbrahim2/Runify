@@ -1,5 +1,7 @@
 package com.example.runify;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorManager;
@@ -7,8 +9,12 @@ import android.hardware.SensorEventListener;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -16,6 +22,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
     private SensorManager sensorManager;
     private Sensor stepSensor;
+    private static final int PERMISSION_REQUEST_CODE = 100;
+    private boolean isPermissionGranted = false;
 
     private TextView stepCountText, distanceText,
             caloriesText, speedText, elevationText;
@@ -31,7 +39,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setContentView(R.layout.activity_main);
 
         initializeViews();
-        setupSensors();
+        checkPermissionAndSetupSensors();
     }
 
     private void initializeViews() {
@@ -44,6 +52,46 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         resetFab = findViewById(R.id.resetFab);
         shareButton = findViewById(R.id.shareButton);
         startTrackingButton = findViewById(R.id.startTrackingButton);
+    }
+
+    private void checkPermissionAndSetupSensors() {
+        if ((ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.ACTIVITY_RECOGNITION
+        ) == PackageManager.PERMISSION_GRANTED)) {
+            isPermissionGranted = true;
+            setupSensors();
+        } else {
+            requestPermission();
+        }
+    }
+
+    private void requestPermission() {
+        ActivityCompat.requestPermissions(
+                this,
+                new String[]{android.Manifest.permission.ACTIVITY_RECOGNITION},
+                PERMISSION_REQUEST_CODE
+        );
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            boolean allPermissionsGranted = true;
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    allPermissionsGranted = false;
+                    break;
+                }
+            }
+            if (allPermissionsGranted) {
+                isPermissionGranted = true;
+                setupSensors();
+            } else {
+                Toast.makeText(this, "Permissions denied. Step counting or SMS won't work.", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void setupSensors() {
