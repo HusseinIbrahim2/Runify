@@ -17,15 +17,22 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener {
+public class MainActivity extends AppCompatActivity implements
+        SensorEventListener,
+        OnMapReadyCallback {
     private static final int PERMISSION_REQUEST_CODE = 100;
     private boolean isPermissionGranted = false;
     private static final String EMERGENCY_PHONE_NUMBER = "your phone number here";
     private SensorManager sensorManager;
     private Sensor stepSensor;
+    private GoogleMap googleMap;
+    private MapView mapView;
 
     private TextView stepCountText, distanceText,
             caloriesText, speedText, elevationText;
@@ -45,6 +52,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         initializeViews();
         checkPermissionAndSetupSensors();
+        mapView.onCreate(savedInstanceState);
+        mapView.getMapAsync(this);
     }
 
     private void checkPermissionAndSetupSensors() {
@@ -111,6 +120,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         resetFab = findViewById(R.id.resetFab);
         shareButton = findViewById(R.id.shareButton);
         startTrackingButton = findViewById(R.id.startTrackingButton);
+        mapView = findViewById(R.id.mapView);
     }
 
     private void setupSensors() {
@@ -146,6 +156,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 break;
         }
     }
+    @Override
+    public void onMapReady(GoogleMap map) {
+        googleMap = map;
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            googleMap.setMyLocationEnabled(true);
+        }
+        googleMap.getUiSettings().setZoomControlsEnabled(true);
+        googleMap.setMinZoomPreference(15);
+    }
     private void sendEmergencySMS() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
             SmsManager smsManager = SmsManager.getDefault();
@@ -163,6 +183,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     protected void onResume() {
         super.onResume();
+        mapView.onResume();
         if (stepSensor != null) {
             sensorManager.registerListener(this, stepSensor, SensorManager.SENSOR_DELAY_NORMAL);
         }
@@ -175,6 +196,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     protected void onPause() {
         super.onPause();
+        mapView.onPause();
         sensorManager.unregisterListener(this);
     }
 }
