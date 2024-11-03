@@ -52,6 +52,9 @@ public class MainActivity extends AppCompatActivity implements
     private boolean isTracking = false;
     private static final long SMS_COOLDOWN_PERIOD = 300000; // 5 minutes in milliseconds
     private static final long LOCATION_UPDATE_INTERVAL = 5000;
+    private float[] lastKnownSpeeds = new float[5]; // Rolling average of last 5 speed readings
+    private int speedIndex = 0;
+    private float currentSpeed = 0;
     private MaterialCardView statsCard;
     private FloatingActionButton resetFab;
     private Button shareButton, startTrackingButton;
@@ -225,6 +228,20 @@ public class MainActivity extends AppCompatActivity implements
     private boolean isRealisticMovement(float distance, float timeDiff) {
         float speed = (distance / timeDiff) * 3.6f;
         return speed <= 25.0f;
+    }
+    private void updateSpeedAverage(float newSpeed) {
+        lastKnownSpeeds[speedIndex] = newSpeed;
+        speedIndex = (speedIndex + 1) % lastKnownSpeeds.length;
+
+        float sum = 0;
+        int count = 0;
+        for (float speed : lastKnownSpeeds) {
+            if (speed > 0) {
+                sum += speed;
+                count++;
+            }
+        }
+        currentSpeed = count > 0 ? sum / count : 0;
     }
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
