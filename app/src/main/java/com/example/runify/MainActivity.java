@@ -83,6 +83,8 @@ public class MainActivity extends AppCompatActivity implements
 
         initializeViews();
         checkPermissionAndSetupSensors();
+        setupLocationServices();
+
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
     }
@@ -205,6 +207,8 @@ public class MainActivity extends AppCompatActivity implements
         shareButton = findViewById(R.id.shareButton);
         startTrackingButton = findViewById(R.id.startTrackingButton);
         mapView = findViewById(R.id.mapView);
+
+        startTrackingButton.setOnClickListener(v -> toggleTracking());
     }
 
     private void setupSensors() {
@@ -238,6 +242,16 @@ public class MainActivity extends AppCompatActivity implements
                     lastSmsSentTime=0;
                 }
                 break;
+        }
+    }
+    private void toggleTracking() {
+        isTracking = !isTracking;
+        startTrackingButton.setText(isTracking ? "Stop Tracking" : "Start Tracking");
+
+        if (isTracking) {
+            startLocationUpdates();
+        } else {
+            stopLocationUpdates();
         }
     }
     @Override
@@ -343,5 +357,6 @@ public class MainActivity extends AppCompatActivity implements
         super.onPause();
         mapView.onPause();
         sensorManager.unregisterListener(this);
+        stopLocationUpdates();
     }
 }
