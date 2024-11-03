@@ -52,6 +52,8 @@ public class MainActivity extends AppCompatActivity implements
     private TextView stepCountText, distanceText,
             caloriesText, speedText, elevationText;
     private int stepCount = 0;
+    private Location lastLocation = null;
+    private long lastLocationTimestamp = 0;
     private boolean isProximityClose = false;
     private long lastSmsSentTime = 0;
     private boolean isTracking = false;
@@ -60,9 +62,15 @@ public class MainActivity extends AppCompatActivity implements
     private float[] lastKnownSpeeds = new float[5]; // Rolling average of last 5 speed readings
     private int speedIndex = 0;
     private float currentSpeed = 0;
+    private float totalDistance = 0;
     private float totalElevationGain = 0;
     private float currentElevation = 0;
     private float lastElevation = 0;
+    private static final float CALORIES_PER_STEP = 0.04f;
+    private float weight = 70.0f;
+    private static final float MET_WALKING = 3.5f;
+    private static final float MET_RUNNING = 8.0f;
+    private static final float RUNNING_THRESHOLD = 6.5f;
     private List<LatLng> routePoints = new ArrayList<>();
     private MaterialCardView statsCard;
     private FloatingActionButton resetFab;
@@ -146,7 +154,24 @@ public class MainActivity extends AppCompatActivity implements
         };
     }
     private void updateLocationData(Location location) {
+        if (location == null) return;
 
+        LatLng currentPoint = new LatLng(location.getLatitude(), location.getLongitude());
+        long currentTime = System.currentTimeMillis();
+        if (lastLocation != null && lastLocationTimestamp != 0) {
+            float timeDiff = (currentTime - lastLocationTimestamp) / 1000f;
+            float distance = location.distanceTo(lastLocation);
+            if (isRealisticMovement(distance, timeDiff)) {
+                totalDistance += distance / 1000f;
+                float currentSpeed = (distance / timeDiff) * 3.6f;
+                updateSpeedAverage(currentSpeed);
+                updateElevationData(location.getAltitude());
+                routePoints.add(currentPoint);
+                updateMap();
+            }
+        }
+        lastLocation = location;
+        lastLocationTimestamp = currentTime;
     }
 
     private void startLocationUpdates() {
@@ -264,6 +289,15 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
         lastElevation = (float) newElevation;
+    }
+    private float calculateCalories() {
+        float calories = 0.0f;
+        calories += stepCount * CALORIES_PER_STEP;
+        calories += totalElevationGain * 0.17f * weight / 1000f;
+        float hours = totalDistance / currentSpeed;
+        float met = currentSpeed > RUNNING_THRESHOLD ? MET_RUNNING : MET_WALKING;
+        calories += weight * met * hours;
+        return Float.isNaN(calories) || calories < 0 ? 0 : calories;
     }
     private void updateMap() {
         if (googleMap == null || routePoints.size() < 2) return;
